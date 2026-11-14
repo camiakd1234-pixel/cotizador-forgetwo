@@ -75,6 +75,7 @@ input,textarea,select{font:inherit;font-size:14px;color:var(--fg);background:var
 input[type=number]{font-family:var(--f-mono);font-size:13.5px;font-variant-numeric:tabular-nums}
 input::placeholder,textarea::placeholder{color:var(--muted);opacity:.75}
 textarea{min-height:84px;resize:vertical}
+textarea.short{min-height:60px}
 input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 @media (max-width:640px){.fields{grid-template-columns:minmax(0,1fr)}}
@@ -101,7 +102,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
 .lcd .tot{color:var(--lcd-fg);font-size:30px;font-weight:700;border-top:1px dashed var(--lcd-line);padding-top:10px;margin-top:auto;align-items:baseline;line-height:1.1}
 .lcd .tot small{font-size:11px;letter-spacing:.14em;color:var(--lcd-dim);font-weight:500}
 .lcd .idle{margin:auto 0;text-align:center;font-family:var(--f-body);font-size:13px}
-.profit{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.profit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
 .profit div{border:1px solid var(--line);border-radius:8px;padding:10px;min-width:0}
 .profit span{display:block;font-size:11.5px;color:var(--muted);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .profit b{display:block;font:700 16px var(--f-mono);font-variant-numeric:tabular-nums;margin-top:4px}
@@ -115,6 +116,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
 .note{font-size:13px;border-radius:7px;padding:9px 12px;margin-top:10px}
 .note.warn{background:var(--warn-bg);color:var(--warn)}
 .note.bad{background:var(--bad-bg);color:var(--bad)}
+.note.info{background:var(--info-bg);color:var(--info)}
 .actions{display:flex;flex-direction:column;gap:8px;margin-top:16px}
 .gen{width:100%;font:600 15px var(--f-display);background:var(--accent);color:var(--on-accent);border:0;border-radius:8px;padding:14px;cursor:pointer}
 .gen:hover:not(:disabled){filter:brightness(1.05)}
@@ -208,6 +210,7 @@ details + details{margin-top:16px;padding-top:16px;border-top:1px solid var(--li
           <div><label for="cliente">Nombre o negocio</label><input id="cliente" type="text" placeholder="Ej: Cafetería La Ronda" autocomplete="off"></div>
           <div><label for="contacto">Contacto (opcional)</label><input id="contacto" type="text" placeholder="WhatsApp o correo" autocomplete="off"></div>
           <div><label for="disenoH">Diseño o modelado (horas)</label><input id="disenoH" type="number" inputmode="decimal" min="0" step="0.25" placeholder="0"></div>
+          <div class="full"><label for="disenoDet">Qué incluye el diseño o modelado (sale en el PDF)</label><textarea id="disenoDet" class="short" placeholder="Ej: Modelado 3D del logo del cliente, ajuste de medidas para que la tapa encaje y una ronda de cambios."></textarea></div>
           <div class="full"><label for="notas">Notas para este cliente</label><textarea id="notas" placeholder="Ej: Colores negro y naranja. Entrega en la oficina del cliente."></textarea></div>
         </div>
       </section>
@@ -228,6 +231,7 @@ details + details{margin-top:16px;padding-top:16px;border-top:1px solid var(--li
           <div title="Lo que queda después de pagar material, luz y desgaste"><span>Te queda</span><b id="pGan">—</b></div>
           <div title="Lo que queda por cada hora que la impresora trabaja"><span>Por hora</span><b id="pHora">—</b></div>
           <div><span>Producción</span><b id="pDias">—</b></div>
+          <div title="Precio de las piezas por gramo, sin contar diseño. Compáralo con el mercado"><span>Por gramo</span><b id="pGramo">—</b></div>
         </div>
         <div class="stack" id="stack" aria-hidden="true"></div>
         <div class="legend" id="legend"></div>
@@ -266,6 +270,9 @@ details + details{margin-top:16px;padding-top:16px;border-top:1px solid var(--li
             <div class="cfg">
               <div><label for="cfgMargenMenor">Margen por menor (%)</label><input type="number" step="5" min="0" id="cfgMargenMenor"></div>
               <div><label for="cfgMargenMayor">Margen por mayor (%)</label><input type="number" step="5" min="0" id="cfgMargenMayor"></div>
+              <div><label for="cfgGramoMenor">Mínimo por gramo, por menor ($)</label><input type="number" step="0.01" min="0" id="cfgGramoMenor"></div>
+              <div><label for="cfgGramoMayor">Mínimo por gramo, por mayor ($)</label><input type="number" step="0.01" min="0" id="cfgGramoMayor"></div>
+              <div><label for="cfgGramoComp">Competencia, precio por gramo ($)</label><input type="number" step="0.01" min="0" id="cfgGramoComp"></div>
               <div><label for="cfgMinimo">Pedido mínimo ($)</label><input type="number" step="0.5" min="0" id="cfgMinimo"></div>
               <div><label for="cfgRedondeo">Redondear precio unitario a ($)</label><input type="number" step="0.05" min="0" id="cfgRedondeo"></div>
               <div><label for="cfgUmbral">Piezas para venta por mayor</label><input type="number" step="1" min="1" id="cfgUmbral"></div>
@@ -275,7 +282,7 @@ details + details{margin-top:16px;padding-top:16px;border-top:1px solid var(--li
               <div><label for="cfgValidez">Validez de la cotización (días)</label><input type="number" step="1" min="1" id="cfgValidez"></div>
             </div>
           </div>
-          <p class="hint">“Uso de impresora” es lo que cobras por tener la máquina ocupada, aparte del desgaste. El margen se suma sobre todo el costo. Son valores de partida: ajústalos con tus números reales.</p>
+          <p class="hint">“Uso de impresora” es lo que cobras por tener la máquina ocupada, aparte del desgaste. El margen se suma sobre todo el costo. El mínimo por gramo es tu piso: ninguna pieza baja de ese precio, ni siquiera con el descuento por volumen (0 lo desactiva). Con el precio de la competencia el cotizador te muestra cuánto cobrarían ellos por las mismas piezas.</p>
           <button class="ghost" type="button" id="resetCfg" style="margin-top:14px">Volver a los valores de partida</button>
         </details>
         <details id="bizBox">
@@ -334,9 +341,9 @@ const local = {
 };
 /* Valores de partida para Ecuador: Ender 3 V3 SE (~$340 en tiendas locales), kWh residencial ~$0.11, PLA $20–30/kg. */
 const DEFAULTS = {
-  cfgTarifaMO:5, cfgPrepMin:20, cfgTarifaDis:8, cfgOcu:1.00,
+  cfgTarifaMO:5, cfgPrepMin:20, cfgTarifaDis:12, cfgOcu:1.00,
   cfgImp:340, cfgVida:3000, cfgRep:0.10, cfgFallos:15, cfgKW:0.12, cfgKWh:0.11,
-  cfgMargenMenor:50, cfgMargenMayor:25, cfgMinimo:5, cfgRedondeo:0.05,
+  cfgMargenMenor:50, cfgMargenMayor:25, cfgGramoMenor:0.14, cfgGramoMayor:0.12, cfgGramoComp:0.14, cfgMinimo:5, cfgRedondeo:0.05,
   cfgUmbral:10, cfgUmbralExtra:50, cfgDescExtra:10, cfgHorasDia:12, cfgValidez:15
 };
 const TEXT_DEFAULTS = {
@@ -376,7 +383,7 @@ function cfg(){
   return {
     tarifaMO:o.cfgTarifaMO, prepMin:o.cfgPrepMin, tarifaDis:o.cfgTarifaDis, ocu:o.cfgOcu,
     imp:o.cfgImp, vida:Math.max(1, o.cfgVida), rep:o.cfgRep, fallos:o.cfgFallos, kw:o.cfgKW, kwh:o.cfgKWh,
-    margenMenor:o.cfgMargenMenor, margenMayor:o.cfgMargenMayor, minimo:o.cfgMinimo, redondeo:o.cfgRedondeo,
+    margenMenor:o.cfgMargenMenor, margenMayor:o.cfgMargenMayor, gramoMenor:o.cfgGramoMenor, gramoMayor:o.cfgGramoMayor, gramoComp:o.cfgGramoComp, minimo:o.cfgMinimo, redondeo:o.cfgRedondeo,
     umbral:Math.max(1, o.cfgUmbral), umbralExtra:Math.max(1, o.cfgUmbralExtra), descExtra:o.cfgDescExtra,
     horasDia:Math.max(1, o.cfgHorasDia), validez:Math.max(1, o.cfgValidez)
   };
@@ -402,7 +409,11 @@ function computeAll(){
   const c = cfg();
   const m = (modo === 'mayor' ? c.margenMayor : c.margenMenor) / 100;
   const desgH = c.imp / c.vida + c.rep;
-  const t = { material:0, desperdicio:0, luz:0, desgaste:0, ocupacion:0, mo:0, diseno:0, cant:0, horas:0 };
+  const t = { material:0, desperdicio:0, luz:0, desgaste:0, ocupacion:0, mo:0, diseno:0, cant:0, horas:0, gramos:0 };
+  const valido = it => Math.round(it.cant) > 0 && (it.peso > 0 || it.horas > 0);
+  const cantTotal = items.filter(valido).reduce((a, it) => a + Math.round(it.cant), 0);
+  const dVol = (modo === 'mayor' && cantTotal >= c.umbralExtra) ? c.descExtra / 100 : 0;
+  const gMin = Math.max(0, modo === 'mayor' ? c.gramoMayor : c.gramoMenor);
   const rows = items.map(it => {
     const cant = Math.max(0, Math.round(it.cant));
     const valida = cant > 0 && (it.peso > 0 || it.horas > 0);
@@ -414,10 +425,14 @@ function computeAll(){
     const ocupacion = it.horas * c.ocu;
     const mo = it.post * cant / 60 * c.tarifaMO;
     const base = material + desperdicio + luz + desgaste + ocupacion + mo;
-    const unit = roundUp(base * (1 + m) / cant, c.redondeo);
+    const costUnit = roundUp(base * (1 + m) / cant, c.redondeo);
+    const pisoUnit = gMin > 0 && it.peso > 0 ? roundUp(it.peso * gMin / (1 - Math.min(dVol, 0.9)), c.redondeo) : 0;
+    const subido = pisoUnit > costUnit;
+    const unit = subido ? pisoUnit : costUnit;
+    t.gramos += it.peso * cant;
     t.material += material; t.desperdicio += desperdicio; t.luz += luz; t.desgaste += desgaste;
     t.ocupacion += ocupacion; t.mo += mo; t.cant += cant; t.horas += it.horas;
-    return { cant, unit, subtotal: cents(unit * cant), valida:true };
+    return { cant, unit, subtotal: cents(unit * cant), valida:true, subido, gramos: it.peso * cant };
   });
   const activo = rows.some(r => r.valida);
   const piezas = cents(rows.reduce((a, r) => a + r.subtotal, 0));
@@ -426,7 +441,7 @@ function computeAll(){
   const prep = activo ? roundUp(prepBase * (1 + m), c.redondeo) : 0;
   const disenoH = Math.max(0, num($('disenoH').value));
   const diseno = activo ? cents(disenoH * c.tarifaDis) : 0; t.diseno = diseno;
-  const descuento = (activo && modo === 'mayor' && t.cant >= c.umbralExtra) ? cents(piezas * c.descExtra / 100) : 0;
+  const descuento = activo ? cents(piezas * dVol) : 0;
   let total = activo ? cents(piezas + prep + diseno - descuento) : 0;
   const ajusteMin = activo && total < c.minimo ? cents(c.minimo - total) : 0;
   total = cents(total + ajusteMin);
@@ -436,7 +451,9 @@ function computeAll(){
   const ganancia = total - costoReal;
   const dias = t.horas > 0 ? Math.ceil(t.horas / c.horasDia) : 0;
   return { c, m, rows, t, piezas, prep, disenoH, diseno, descuento, ajusteMin, total, costoReal, margen, ganancia,
-           ganHora: t.horas > 0 ? ganancia / t.horas : 0, dias, activo };
+           ganHora: t.horas > 0 ? ganancia / t.horas : 0, dias, activo, gMin,
+           porGramo: t.gramos > 0 ? (total - diseno) / t.gramos : 0, subidas: rows.filter(r => r.subido).length,
+           comp: cents(t.gramos * Math.max(0, c.gramoComp)) };
 }
 
 /* ---------- Piezas ---------- */
@@ -476,7 +493,7 @@ function update(){
   items.forEach((it, i) => {
     const el = $('pp' + it.id); if(!el) return;
     const row = r.rows[i];
-    el.innerHTML = row.valida ? `${money(row.unit)} c/u · <b>${money(row.subtotal)}</b>` : '';
+    el.innerHTML = row.valida ? `${row.gramos > 0 ? '$' + (row.subtotal / row.gramos).toFixed(3) + '/g · ' : ''}${money(row.unit)} c/u · <b>${money(row.subtotal)}</b>` : '';
   });
   $('countLbl').textContent = r.t.cant ? `${r.t.cant} pza${r.t.cant === 1 ? '' : 's'} · ${+r.t.horas.toFixed(1)} h` : '';
 
@@ -490,7 +507,7 @@ function update(){
   if(r.activo){
     h += `<div class="ln"><span>Piezas</span><span>${money(r.piezas)}</span></div>`;
     h += `<div class="ln"><span>Preparación del pedido</span><span>${money(r.prep)}</span></div>`;
-    if(r.diseno > 0) h += `<div class="ln"><span>Diseño (${r.disenoH} h)</span><span>${money(r.diseno)}</span></div>`;
+    if(r.diseno > 0) h += `<div class="ln"><span>Modelado (${r.disenoH} h × ${money(r.c.tarifaDis)})</span><span>${money(r.diseno)}</span></div>`;
     if(r.descuento > 0) h += `<div class="ln good"><span>Descuento por volumen ${r.c.descExtra}%</span><span>-${money(r.descuento)}</span></div>`;
     if(r.ajusteMin > 0) h += `<div class="ln"><span>Ajuste a pedido mínimo</span><span>${money(r.ajusteMin)}</span></div>`;
     h += `<div class="ln tot"><small>TOTAL</small><span>${money(r.total)}</span></div>`;
@@ -501,6 +518,7 @@ function update(){
   $('pGan').textContent = r.activo ? money(r.ganancia) : '—';
   $('pHora').textContent = r.activo && r.t.horas > 0 ? money(r.ganHora) : '—';
   $('pDias').textContent = r.dias ? `${r.dias} día${r.dias === 1 ? '' : 's'}` : '—';
+  $('pGramo').textContent = r.activo && r.porGramo > 0 ? '$' + r.porGramo.toFixed(3) : '—';
 
   const notes = [];
   const sinCodigo = !codigo(), sinCliente = !$('cliente').value.trim();
@@ -509,6 +527,15 @@ function update(){
   if(r.activo && sinCliente) notes.push(['warn', 'Escribe el nombre del cliente para poder generar el PDF.']);
   if(r.activo && items.some((it, i) => r.rows[i].cant > 0 && !r.rows[i].valida)) notes.push(['warn', 'Hay piezas sin gramos ni horas. No se incluyen hasta que las llenes.']);
   if(r.activo && items.some((it, i) => r.rows[i].valida && (it.peso <= 0 || it.horas <= 0))) notes.push(['warn', 'Hay piezas con gramos u horas en cero. Revisa que el precio esté completo.']);
+  if(r.activo && r.subidas) notes.push(['info', `${r.subidas === 1 ? '1 pieza subió' : r.subidas + ' piezas subieron'} al mínimo de $${r.gMin.toFixed(2)}/g para no quedar por debajo del mercado.`]);
+  if(r.activo && r.comp > 0){
+    const nuestro = r.total - r.diseno, dif = (1 - nuestro / r.comp) * 100;
+    notes.push(dif >= 0
+      ? ['info', `A $${r.c.gramoComp.toFixed(2)}/g la competencia cobraría ${money(r.comp)} por estas piezas. Tú cobras ${money(nuestro)}, ${Math.round(dif)}% menos.`]
+      : ['warn', `A $${r.c.gramoComp.toFixed(2)}/g la competencia cobraría ${money(r.comp)}. Tú cobras ${money(nuestro)}, ${Math.round(-dif)}% más. Explica al cliente qué incluye tu precio.`]);
+  }
+  if(r.disenoH > 0 && !(r.c.tarifaDis > 0)) notes.push(['warn', 'La hora de diseño está en $0 en Tarifas y costos, así que el modelado no se cobra ni sale en el PDF.']);
+  if(r.diseno > 0 && !$('disenoDet').value.trim()) notes.push(['warn', 'Escribe qué incluye el modelado. El cliente lo verá en el PDF junto al cobro.']);
   if(r.activo && r.t.horas > 0 && r.ganHora < 1.5) notes.push(['bad', `Te quedan ${money(r.ganHora)} por hora de máquina. Sube el margen o el uso de impresora.`]);
   if(r.activo){
     if(modo === 'mayor' && r.t.cant < r.c.umbral) notes.push(['warn', `${r.t.cant === 1 ? 'Es 1 pieza' : 'Son ' + r.t.cant + ' piezas'}. El precio por mayor está pensado para ${r.c.umbral} o más.`]);
@@ -690,7 +717,10 @@ function buildPDF(q){
   q.lines.forEach((ln, i) => {
     doc.setFont('helvetica','normal'); doc.setFontSize(10);
     const wrapped = doc.splitTextToSize(pdfText(ln.desc), 250).slice(0, 2);
-    const hgt = 20 + (wrapped.length - 1) * 12;
+    doc.setFontSize(8.5);
+    const note = ln.note ? doc.splitTextToSize(pdfText(ln.note), 270).slice(0, 6) : [];
+    doc.setFontSize(10);
+    const hgt = 20 + (wrapped.length - 1) * 12 + (note.length ? note.length * 10.5 + 2 : 0);
     if(y + hgt > 772){ doc.addPage(); y = 60; header(); }
     if(i % 2 === 1){ doc.setFillColor(...soft); doc.rect(L, y - 13, R - L, hgt, 'F'); }
     doc.setTextColor(...graphite);
@@ -698,6 +728,7 @@ function buildPDF(q){
     if(ln.cant != null) doc.text(String(ln.cant), X.cant, y, { align:'right' });
     if(ln.unit != null) doc.text(money(ln.unit), X.unit, y, { align:'right' });
     doc.text(money(ln.subtotal), X.sub, y, { align:'right' });
+    if(note.length){ doc.setFontSize(8.5); doc.setTextColor(...gray); doc.text(note, X.desc, y + wrapped.length * 12 + 1, { lineHeightFactor:1.24 }); doc.setFontSize(10); }
     y += hgt;
   });
 
@@ -767,7 +798,7 @@ function snapshotQuote(folio){
     lines.push({ desc: it.desc.trim() || ('Pieza ' + (i + 1)), cant: row.cant, unit: row.unit, subtotal: row.subtotal });
   });
   lines.push({ desc:'Preparación del pedido (laminado, pruebas y empaque)', cant:1, unit:r.prep, subtotal:r.prep });
-  if(r.diseno > 0) lines.push({ desc:'Diseño y modelado 3D (' + r.disenoH + ' h)', cant:1, unit:r.diseno, subtotal:r.diseno });
+  if(r.diseno > 0) lines.push({ desc:'Diseño y modelado 3D (horas)', cant:r.disenoH, unit:r.c.tarifaDis, subtotal:r.diseno, note:$('disenoDet').value.trim() });
   if(r.ajusteMin > 0) lines.push({ desc:'Ajuste a pedido mínimo', cant:null, unit:null, subtotal:r.ajusteMin });
   return {
     folio, ts: d.getTime(), fecha, validaHasta: vence, dias: r.dias,
@@ -775,7 +806,7 @@ function snapshotQuote(folio){
     cond: o.bizCond, biz: { whats:o.bizWhats, ig:o.bizIg, mail:o.bizMail, ciudad:o.bizCiudad },
     modo, total: r.total, descuento: r.descuento, descPct: r.c.descExtra, ganancia: cents(r.ganancia), lines,
     items: items.filter((it, i) => r.rows[i].valida).map(({ desc, cant, peso, horas, post, precioKg }) => ({ desc, cant, peso, horas, post, precioKg })),
-    disenoH: r.disenoH,
+    disenoH: r.disenoH, disenoDet: $('disenoDet').value.trim(),
     codigo: codigo(), creadoPor: myId || null, estado: 'pendiente', estadoTs: d.getTime(), estadoPor: myId || null, estadoCodigo: codigo()
   };
 }
@@ -798,13 +829,13 @@ let armTimer = null;
 function disarm(){ const b = $('newBtn'); b.classList.remove('arm'); b.textContent = 'Nueva cotización'; }
 function nuevaCotizacion(){
   const b = $('newBtn');
-  const hayAlgo = items.some(it => it.desc || it.peso || it.horas) || $('cliente').value || $('notas').value || $('contacto').value || $('disenoH').value;
+  const hayAlgo = items.some(it => it.desc || it.peso || it.horas) || $('cliente').value || $('notas').value || $('contacto').value || $('disenoH').value || $('disenoDet').value;
   if(hayAlgo && !b.classList.contains('arm')){
     b.classList.add('arm'); b.textContent = 'Toca otra vez para borrar todo';
     clearTimeout(armTimer); armTimer = setTimeout(disarm, 3500); return;
   }
   clearTimeout(armTimer); disarm();
-  ['cliente','contacto','notas','disenoH'].forEach(id => { $(id).value = ''; });
+  ['cliente','contacto','notas','disenoH','disenoDet'].forEach(id => { $(id).value = ''; });
   items = [newItem()]; buildPieces();
   $('cliente').focus();
 }
@@ -814,6 +845,7 @@ function cargar(q){
   $('cliente').value = q.cliente === 'Cliente' ? '' : (q.cliente || '');
   $('contacto').value = q.contacto || ''; $('notas').value = q.notas || '';
   $('disenoH').value = q.disenoH ? q.disenoH : '';
+  $('disenoDet').value = q.disenoDet || '';
   setModo(q.modo === 'mayor' ? 'mayor' : 'menor');
   buildPieces();
   toast('Piezas de ' + q.folio + ' copiadas. Revisa los datos y genera la nueva cotización.');
@@ -839,7 +871,7 @@ $('pieces').addEventListener('click', e => {
 $('addBtn').addEventListener('click', () => { items.push(newItem()); buildPieces(); $('d' + uid).focus(); });
 $('mMenor').addEventListener('click', () => setModo('menor'));
 $('mMayor').addEventListener('click', () => setModo('mayor'));
-['disenoH','cliente'].forEach(id => $(id).addEventListener('input', update));
+['disenoH','cliente','disenoDet'].forEach(id => $(id).addEventListener('input', update));
 [...Object.keys(DEFAULTS), ...Object.keys(TEXT_DEFAULTS)].forEach(k => $(k).addEventListener('input', () => { update(); queueCfgSave(); }));
 $('resetCfg').addEventListener('click', () => {
   const keep = readCfgInputs(); setCfgInputs(DEFAULTS);
