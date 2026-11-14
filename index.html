@@ -272,6 +272,7 @@ details + details{margin-top:16px;padding-top:16px;border-top:1px solid var(--li
               <div><label for="cfgMargenMayor">Margen por mayor (%)</label><input type="number" step="5" min="0" id="cfgMargenMayor"></div>
               <div><label for="cfgGramoMenor">Mínimo por gramo, por menor ($)</label><input type="number" step="0.01" min="0" id="cfgGramoMenor"></div>
               <div><label for="cfgGramoMayor">Mínimo por gramo, por mayor ($)</label><input type="number" step="0.01" min="0" id="cfgGramoMayor"></div>
+              <div><label for="cfgGramoGrande">Mínimo por gramo, pedidos grandes ($)</label><input type="number" step="0.01" min="0" id="cfgGramoGrande"></div>
               <div><label for="cfgGramoComp">Competencia, precio por gramo ($)</label><input type="number" step="0.01" min="0" id="cfgGramoComp"></div>
               <div><label for="cfgMinimo">Pedido mínimo ($)</label><input type="number" step="0.5" min="0" id="cfgMinimo"></div>
               <div><label for="cfgRedondeo">Redondear precio unitario a ($)</label><input type="number" step="0.05" min="0" id="cfgRedondeo"></div>
@@ -282,7 +283,7 @@ details + details{margin-top:16px;padding-top:16px;border-top:1px solid var(--li
               <div><label for="cfgValidez">Validez de la cotización (días)</label><input type="number" step="1" min="1" id="cfgValidez"></div>
             </div>
           </div>
-          <p class="hint">“Uso de impresora” es lo que cobras por tener la máquina ocupada, aparte del desgaste. El margen se suma sobre todo el costo. El mínimo por gramo es tu piso: ninguna pieza baja de ese precio, ni siquiera con el descuento por volumen (0 lo desactiva). Con el precio de la competencia el cotizador te muestra cuánto cobrarían ellos por las mismas piezas.</p>
+          <p class="hint">“Uso de impresora” es lo que cobras por tener la máquina ocupada, aparte del desgaste. El margen se suma sobre todo el costo. El mínimo por gramo es tu piso: ninguna pieza baja de ese precio (0 lo desactiva). Los pedidos grandes son los que llegan a las piezas del descuento extra. Con el precio de la competencia el cotizador te muestra cuánto cobrarían ellos por las mismas piezas.</p>
           <button class="ghost" type="button" id="resetCfg" style="margin-top:14px">Volver a los valores de partida</button>
         </details>
         <details id="bizBox">
@@ -341,10 +342,10 @@ const local = {
 };
 /* Valores de partida para Ecuador: Ender 3 V3 SE (~$340 en tiendas locales), kWh residencial ~$0.11, PLA $20–30/kg. */
 const DEFAULTS = {
-  cfgTarifaMO:5, cfgPrepMin:20, cfgTarifaDis:12, cfgOcu:1.00,
+  cfgTarifaMO:5, cfgPrepMin:15, cfgTarifaDis:12, cfgOcu:0.70,
   cfgImp:340, cfgVida:3000, cfgRep:0.10, cfgFallos:15, cfgKW:0.12, cfgKWh:0.11,
-  cfgMargenMenor:50, cfgMargenMayor:25, cfgGramoMenor:0.14, cfgGramoMayor:0.12, cfgGramoComp:0.14, cfgMinimo:5, cfgRedondeo:0.05,
-  cfgUmbral:10, cfgUmbralExtra:50, cfgDescExtra:10, cfgHorasDia:12, cfgValidez:15
+  cfgMargenMenor:55, cfgMargenMayor:40, cfgGramoMenor:0.12, cfgGramoMayor:0.10, cfgGramoGrande:0.09, cfgGramoComp:0.15, cfgMinimo:5, cfgRedondeo:0.05,
+  cfgUmbral:10, cfgUmbralExtra:100, cfgDescExtra:8, cfgHorasDia:12, cfgValidez:15
 };
 const TEXT_DEFAULTS = {
   bizWhats:'', bizIg:'', bizMail:'', bizCiudad:'Quito, Ecuador',
@@ -383,7 +384,7 @@ function cfg(){
   return {
     tarifaMO:o.cfgTarifaMO, prepMin:o.cfgPrepMin, tarifaDis:o.cfgTarifaDis, ocu:o.cfgOcu,
     imp:o.cfgImp, vida:Math.max(1, o.cfgVida), rep:o.cfgRep, fallos:o.cfgFallos, kw:o.cfgKW, kwh:o.cfgKWh,
-    margenMenor:o.cfgMargenMenor, margenMayor:o.cfgMargenMayor, gramoMenor:o.cfgGramoMenor, gramoMayor:o.cfgGramoMayor, gramoComp:o.cfgGramoComp, minimo:o.cfgMinimo, redondeo:o.cfgRedondeo,
+    margenMenor:o.cfgMargenMenor, margenMayor:o.cfgMargenMayor, gramoMenor:o.cfgGramoMenor, gramoMayor:o.cfgGramoMayor, gramoGrande:o.cfgGramoGrande, gramoComp:o.cfgGramoComp, minimo:o.cfgMinimo, redondeo:o.cfgRedondeo,
     umbral:Math.max(1, o.cfgUmbral), umbralExtra:Math.max(1, o.cfgUmbralExtra), descExtra:o.cfgDescExtra,
     horasDia:Math.max(1, o.cfgHorasDia), validez:Math.max(1, o.cfgValidez)
   };
@@ -413,7 +414,8 @@ function computeAll(){
   const valido = it => Math.round(it.cant) > 0 && (it.peso > 0 || it.horas > 0);
   const cantTotal = items.filter(valido).reduce((a, it) => a + Math.round(it.cant), 0);
   const dVol = (modo === 'mayor' && cantTotal >= c.umbralExtra) ? c.descExtra / 100 : 0;
-  const gMin = Math.max(0, modo === 'mayor' ? c.gramoMayor : c.gramoMenor);
+  const grande = modo === 'mayor' && cantTotal >= c.umbralExtra;
+  const gMin = Math.max(0, grande ? c.gramoGrande : modo === 'mayor' ? c.gramoMayor : c.gramoMenor);
   const rows = items.map(it => {
     const cant = Math.max(0, Math.round(it.cant));
     const valida = cant > 0 && (it.peso > 0 || it.horas > 0);
@@ -527,12 +529,13 @@ function update(){
   if(r.activo && sinCliente) notes.push(['warn', 'Escribe el nombre del cliente para poder generar el PDF.']);
   if(r.activo && items.some((it, i) => r.rows[i].cant > 0 && !r.rows[i].valida)) notes.push(['warn', 'Hay piezas sin gramos ni horas. No se incluyen hasta que las llenes.']);
   if(r.activo && items.some((it, i) => r.rows[i].valida && (it.peso <= 0 || it.horas <= 0))) notes.push(['warn', 'Hay piezas con gramos u horas en cero. Revisa que el precio esté completo.']);
-  if(r.activo && r.subidas) notes.push(['info', `${r.subidas === 1 ? '1 pieza subió' : r.subidas + ' piezas subieron'} al mínimo de $${r.gMin.toFixed(2)}/g para no quedar por debajo del mercado.`]);
+  if(r.activo && r.subidas) notes.push(['info', `${r.subidas === 1 ? '1 pieza subió' : r.subidas + ' piezas subieron'} al mínimo de $${r.gMin.toFixed(2)}/g para que el pedido te deje ganancia.`]);
   if(r.activo && r.comp > 0){
     const nuestro = r.total - r.diseno, dif = (1 - nuestro / r.comp) * 100;
-    notes.push(dif >= 0
-      ? ['info', `A $${r.c.gramoComp.toFixed(2)}/g la competencia cobraría ${money(r.comp)} por estas piezas. Tú cobras ${money(nuestro)}, ${Math.round(dif)}% menos.`]
-      : ['warn', `A $${r.c.gramoComp.toFixed(2)}/g la competencia cobraría ${money(r.comp)}. Tú cobras ${money(nuestro)}, ${Math.round(-dif)}% más. Explica al cliente qué incluye tu precio.`]);
+    const ref = `A $${r.c.gramoComp.toFixed(2)}/g la competencia cobraría ${money(r.comp)}. Tú cobras ${money(nuestro)}`;
+    notes.push(dif >= 0 ? ['info', `${ref}, ${Math.round(dif)}% menos.`]
+      : dif > -15 ? ['info', `${ref}, casi lo mismo (${Math.round(-dif)}% más).`]
+      : ['warn', `${ref}, ${Math.round(-dif)}% más. Pasa en piezas chicas o lentas por el tiempo de máquina; explícale al cliente qué incluye tu precio.`]);
   }
   if(r.disenoH > 0 && !(r.c.tarifaDis > 0)) notes.push(['warn', 'La hora de diseño está en $0 en Tarifas y costos, así que el modelado no se cobra ni sale en el PDF.']);
   if(r.diseno > 0 && !$('disenoDet').value.trim()) notes.push(['warn', 'Escribe qué incluye el modelado. El cliente lo verá en el PDF junto al cobro.']);
